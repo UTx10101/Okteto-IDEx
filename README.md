@@ -1,4 +1,4 @@
-# Okteto-IDE
+# Okteto-IDEx
 
 This repo provide the base to setup and experience Integrated Development directly on cloud with Okteto.
 
