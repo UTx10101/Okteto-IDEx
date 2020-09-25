@@ -1,0 +1,104 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: ide
+  namespace: utx10101
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/auth-type: basic
+    nginx.ingress.kubernetes.io/auth-secret: theia-basic-auth
+    nginx.ingress.kubernetes.io/auth-realm: 'Authentication Required - Eclipse Theia'
+spec:
+  rules:
+  - host: ide-utx10101.cloud.okteto.net
+    http:
+      paths:
+      - backend:
+          serviceName: ide
+          servicePort: 80
+  - host: 5000-ide-ralphilius.cloud.okteto.net
+    http:
+      paths:
+      - backend:
+          serviceName: ide
+          servicePort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata:
+ name: ide
+ namespace: utx10101
+spec:
+ ports:
+ - port: 80
+   name: "80"
+   targetPort: 3000
+ - port: 5000
+   name: "5000"
+   targetPort: 5000
+ selector:
+   app: ide
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ide-pvc
+  namespace: utx10101
+  labels:
+    app: ide
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: standard
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: ide
+  name: ide
+  namespace: utx10101
+spec:
+  selector:
+    matchLabels:
+      app: ide
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: ide
+    spec:
+      volumes:
+      - name: storage
+        persistentVolumeClaim:
+          claimName: ide-pvc
+      - name: ssh-secret-volume
+        secret:
+          secretName: mba-ssh-key
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+      - image: theiaide/theia-full:latest
+        imagePullPolicy: Always
+        name: ide
+        resources:
+          requests:
+             memory: "4Gi"
+             cpu: 2
+          limits:
+             memory: "4Gi"
+             cpu: 2
+        ports:
+        - containerPort: 3000
+        volumeMounts:
+        - name: storage
+          mountPath: "/home/project"
+        - name: ssh-secret-volume
+          mountPath: "/home/theia/.ssh"
