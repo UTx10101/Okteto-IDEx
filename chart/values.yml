@@ -1,0 +1,5 @@
+tag: dev
+
+idex:
+  replicaCount: 1
+  image: okteto.dev/idex
