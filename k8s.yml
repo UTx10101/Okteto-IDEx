@@ -16,7 +16,7 @@ spec:
       - backend:
           serviceName: ide
           servicePort: 80
-  - host: 5000-ide-ralphilius.cloud.okteto.net
+  - host: 5000-ide-utx10101.cloud.okteto.net
     http:
       paths:
       - backend:
