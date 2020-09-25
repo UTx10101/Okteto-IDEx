@@ -1,7 +1,7 @@
 apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
-  name: ide
+  name: theia
   namespace: utx10101
   annotations:
     kubernetes.io/ingress.class: nginx
@@ -14,19 +14,19 @@ spec:
     http:
       paths:
       - backend:
-          serviceName: ide
+          serviceName: theia
           servicePort: 80
-  - host: 5000-ide-utx10101.cloud.okteto.net
+  - host: 5000-theia-utx10101.cloud.okteto.net
     http:
       paths:
       - backend:
-          serviceName: ide
+          serviceName: theia
           servicePort: 5000
 ---
 apiVersion: v1
 kind: Service
 metadata:
- name: ide
+ name: theia
  namespace: utx10101
 spec:
  ports:
@@ -37,15 +37,15 @@ spec:
    name: "5000"
    targetPort: 5000
  selector:
-   app: ide
+   app: theia
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: ide-pvc
+  name: theia-pvc
   namespace: utx10101
   labels:
-    app: ide
+    app: theia
 spec:
   accessModes:
     - ReadWriteOnce
@@ -58,25 +58,25 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: ide
-  name: ide
+    app: theia
+  name: theia
   namespace: utx10101
 spec:
   selector:
     matchLabels:
-      app: ide
+      app: theia
   replicas: 1
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: ide
+        app: theia
     spec:
       volumes:
       - name: storage
         persistentVolumeClaim:
-          claimName: ide-pvc
+          claimName: theia-pvc
       - name: ssh-secret-volume
         secret:
           secretName: mba-ssh-key
@@ -87,7 +87,7 @@ spec:
       containers:
       - image: theiaide/theia-full:latest
         imagePullPolicy: Always
-        name: ide
+        name: theia
         resources:
           requests:
              memory: "4Gi"
