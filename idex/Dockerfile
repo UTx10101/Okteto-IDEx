@@ -135,41 +135,6 @@ RUN go get -u -v -d github.com/stamblerre/gocode && \
 
 ENV PATH=$PATH:$GOPATH/bin
 
-
-#Java
-RUN apt-get update && apt-get -y install openjdk-11-jdk maven gradle
-
-
-#C/C++
-# public LLVM PPA, development version of LLVM
-ARG LLVM=12
-
-RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add - && \
-    echo "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic main" > /etc/apt/sources.list.d/llvm.list && \
-    apt-get update && \
-    apt-get install -y \
-                       clang-tools-$LLVM \
-                       clangd-$LLVM \
-                       clang-tidy-$LLVM \
-                       gcc-multilib \
-                       g++-multilib \
-                       gdb && \
-    ln -s /usr/bin/clang-$LLVM /usr/bin/clang && \
-    ln -s /usr/bin/clang++-$LLVM /usr/bin/clang++ && \
-    ln -s /usr/bin/clang-cl-$LLVM /usr/bin/clang-cl && \
-    ln -s /usr/bin/clang-cpp-$LLVM /usr/bin/clang-cpp && \
-    ln -s /usr/bin/clang-tidy-$LLVM /usr/bin/clang-tidy && \
-    ln -s /usr/bin/clangd-$LLVM /usr/bin/clangd
-
-# Install latest stable CMake
-ARG CMAKE_VERSION=3.18.1
-
-RUN wget "https://github.com/Kitware/CMake/releases/download/v$CMAKE_VERSION/cmake-$CMAKE_VERSION-Linux-x86_64.sh" && \
-    chmod a+x cmake-$CMAKE_VERSION-Linux-x86_64.sh && \
-    ./cmake-$CMAKE_VERSION-Linux-x86_64.sh --prefix=/usr/ --skip-license && \
-    rm cmake-$CMAKE_VERSION-Linux-x86_64.sh
-
-
 #Python 2-3
 RUN apt-get update \
     && apt-get install -y software-properties-common \
@@ -180,21 +145,6 @@ RUN apt-get update \
     && python -m pip install --upgrade pip --user \
     && python3.8 -m pip install --upgrade pip --user \
     && pip3 install python-language-server flake8 autopep8
-
-
-#.NET Core SDK
-ARG DOTNET_VERSION=3.1
-# disables .NET telemetry
-ENV DOTNET_CLI_TELEMETRY_OPTOUT 1
-# suppresses .NET welcome message
-ENV DOTNET_SKIP_FIRST_TIME_EXPERIENCE 1
-
-RUN curl -SLO "https://packages.microsoft.com/config/ubuntu/18.04/packages-microsoft-prod.deb" \
-    && dpkg -i packages-microsoft-prod.deb \
-    && rm packages-microsoft-prod.deb \
-    && apt-get update \
-    && apt-get install -y dotnet-sdk-$DOTNET_VERSION
-
 
 #PHP
 ARG PHP_VERSION=7.4
@@ -215,47 +165,6 @@ RUN curl -s -o composer-setup.php https://getcomposer.org/installer \
 #Ruby
 RUN apt-get update && apt-get -y install ruby ruby-dev zlib1g-dev && \
     gem install solargraph
-
-
-#Swift
-ARG SWIFT_VERSION=5.2.4
-
-RUN apt-get update \
-    && apt-get install -y binutils libc6-dev libcurl4 libedit2 libgcc-5-dev libpython2.7 libsqlite3-0 libstdc++-5-dev libxml2 pkg-config tzdata zlib1g-dev \
-    && curl -SLO https://swift.org/builds/swift-$SWIFT_VERSION-release/ubuntu1804/swift-$SWIFT_VERSION-RELEASE/swift-$SWIFT_VERSION-RELEASE-ubuntu18.04.tar.gz \
-    && curl -SLO https://swift.org/builds/swift-$SWIFT_VERSION-release/ubuntu1804/swift-$SWIFT_VERSION-RELEASE/swift-$SWIFT_VERSION-RELEASE-ubuntu18.04.tar.gz.sig \
-    && wget -q -O - https://swift.org/keys/all-keys.asc | gpg --import - \
-    && (    gpg --keyserver pool.sks-keyservers.net --refresh-keys Swift \
-         || gpg --keyserver ipv4.pool.sks-keyservers.net --refresh-keys Swift \
-         || gpg --keyserver pool.sks-keyservers.net --refresh-keys Swift \
-         || gpg --keyserver pgp.mit.edu --refresh-keys Swift \
-         || gpg --keyserver keyserver.pgp.com --refresh-keys Swift \
-         || gpg --keyserver ha.pool.sks-keyservers.net --refresh-keys Swift \
-       ) \
-    && gpg --verify swift-$SWIFT_VERSION-RELEASE-ubuntu18.04.tar.gz.sig \
-    && tar fxz swift-$SWIFT_VERSION-RELEASE-ubuntu18.04.tar.gz \
-    && rm swift-$SWIFT_VERSION-RELEASE-ubuntu18.04.tar.gz swift-$SWIFT_VERSION-RELEASE-ubuntu18.04.tar.gz.sig \
-    && mv swift-$SWIFT_VERSION-RELEASE-ubuntu18.04 /usr/local/swift \
-    && ln -s /usr/local/swift/usr/bin/swift* /usr/bin \
-    && ln -s /usr/local/swift/usr/bin/lldb* /usr/bin \
-    && ln -s /usr/local/swift/usr/bin/sourcekit-lsp /usr/bin
-
-
-#Dart
-ENV DART_VERSION 2.9.0
-
-RUN \
-  apt-get update && apt-get install --no-install-recommends -y -q gnupg2 curl git ca-certificates apt-transport-https openssh-client && \
-  curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
-  curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list && \
-  curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_testing.list > /etc/apt/sources.list.d/dart_testing.list && \
-  curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_unstable.list > /etc/apt/sources.list.d/dart_unstable.list && \
-  apt-get update && \
-  apt-get install dart=$DART_VERSION-1
-
-ENV DART_SDK /usr/lib/dart
-ENV PATH $DART_SDK/bin:/theia/.pub-cache/bin:$PATH
-
 
 ## User account
 RUN adduser --disabled-password --gecos '' theia && \
@@ -290,15 +199,13 @@ WORKDIR /home/theia
 
 COPY --from=idex /home/theia/* .
 
-# RUN wget -O package.json https://github.com/theia-ide/theia-apps/blob/master/theia-full-docker/${version}.package.json
-
-#RUN yarn --production && \
-#    yarn autoclean --init && \
-#    echo *.ts >> .yarnclean && \
-#    echo *.ts.map >> .yarnclean && \
-#    echo *.spec.* >> .yarnclean && \
-#    yarn autoclean --force && \
-#    yarn cache clean
+RUN yarn --production && \
+    yarn autoclean --init && \
+    echo *.ts >> .yarnclean && \
+    echo *.ts.map >> .yarnclean && \
+    echo *.spec.* >> .yarnclean && \
+    yarn autoclean --force && \
+    yarn cache clean
 
 # Change permissions to make the `yang-language-server` executable.
 RUN chmod +x ./plugins/yangster/extension/server/bin/yang-language-server
