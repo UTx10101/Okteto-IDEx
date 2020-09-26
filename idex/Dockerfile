@@ -1,5 +1,3 @@
-FROM theiaide/theia-full AS idex
-
 FROM ubuntu:18.04
 
 ENV DEBIAN_FRONTEND noninteractive
@@ -197,9 +195,11 @@ RUN apt-get update && apt-get install -y python build-essential && \
 USER theia
 WORKDIR /home/theia
 
-COPY --from=idex /home/theia/* .
-
-RUN yarn --production && \
+RUN wget -O package.json https://github.com/theia-ide/theia-apps/blob/master/theia-full-docker/latest.package.json && \
+    yarn --pure-lockfile && \
+    NODE_OPTIONS="--max_old_space_size=4096" yarn theia build && \
+    yarn theia download:plugins && \
+    yarn --production && \
     yarn autoclean --init && \
     echo *.ts >> .yarnclean && \
     echo *.ts.map >> .yarnclean && \
