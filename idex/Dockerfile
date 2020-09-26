@@ -292,7 +292,7 @@ COPY --from=idex /home/theia/* .
 
 # RUN wget -O package.json https://github.com/theia-ide/theia-apps/blob/master/theia-full-docker/${version}.package.json
 
-yarn --production && \
+RUN yarn --production && \
     yarn autoclean --init && \
     echo *.ts >> .yarnclean && \
     echo *.ts.map >> .yarnclean && \
