@@ -1,3 +1,5 @@
+FROM theiaide/theia-full as idex
+
 FROM ubuntu:18.04
 
 ENV DEBIAN_FRONTEND noninteractive
@@ -9,11 +11,6 @@ ENV YARN_VERSION 1.13.0
 
 # use "latest" or "next" version for Theia packages
 ARG version=latest
-
-# Optionally build a striped Theia application with no map file or .ts sources.
-# Makes image ~150MB smaller when enabled
-ARG strip=true
-ENV strip=$strip
 
 #Common deps
 RUN apt-get update && \
@@ -290,23 +287,18 @@ RUN apt-get update && apt-get install -y python build-essential && \
 
 USER theia
 WORKDIR /home/theia
-RUN wget -O package.json https://github.com/theia-ide/theia-apps/blob/master/theia-full-docker/${version}.package.json
 
-RUN if [ "$strip" = "true" ]; then \
-yarn --pure-lockfile && \
-    NODE_OPTIONS="--max_old_space_size=4096" yarn theia build && \
-    yarn theia download:plugins && \
-    yarn --production && \
+COPY --from=idex /home/theia/* .
+
+# RUN wget -O package.json https://github.com/theia-ide/theia-apps/blob/master/theia-full-docker/${version}.package.json
+
+yarn --production && \
     yarn autoclean --init && \
     echo *.ts >> .yarnclean && \
     echo *.ts.map >> .yarnclean && \
     echo *.spec.* >> .yarnclean && \
     yarn autoclean --force && \
-    yarn cache clean \
-;else \
-yarn --cache-folder ./ycache && rm -rf ./ycache && \
-     NODE_OPTIONS="--max_old_space_size=4096" yarn theia build && yarn theia download:plugins \
-;fi
+    yarn cache clean
 
 # Change permissions to make the `yang-language-server` executable.
 RUN chmod +x ./plugins/yangster/extension/server/bin/yang-language-server
