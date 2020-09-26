@@ -1,12 +1,17 @@
 runtime: full
-repository:
+
+# use this to clone a public repository automatically
+repository: https://github.com/UTx10101/Okteto-IDEx
+
+# set this when using a private repository https://github.com/settings/tokens
+# or add a GIT_TOKEN okteto secret
 gitToken:
 
 persistence:
-  size: 1Gi
+  size: 2.5Gi
 
 image:
-  repository: theiaide/theia
+  repository: okteto.dev/idex
   tag: latest
   pullPolicy: Always
 
@@ -25,9 +30,9 @@ podSecurityContext:
 
 service:
   type: ClusterIP
-  port: 3000
+  port: 3000 # Default IDEx port
 
 resources:
   limits:
-    cpu: "1"
-    memory: 2Gi
+    cpu: "2"
+    memory: 4Gi
