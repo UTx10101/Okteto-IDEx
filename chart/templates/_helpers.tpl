@@ -66,7 +66,7 @@ Create the name of the service account to use
 Get the image name
 */}}
 {{- define "idex.image" -}}
-{{- $runtimes := list "idex" "nodejs" "go" "php" "dart" "cpp" "java" "rust" -}}
+{{- $runtimes := list "full" "nodejs" "go" "php" "dart" "cpp" "java" "rust" -}}
 {{if has .Values.runtime $runtimes }}
    {{- if eq .Values.runtime "nodejs" -}}
    {{- printf "%s:%s" .Values.image.repository .Values.image.tag -}}
