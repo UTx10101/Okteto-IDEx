@@ -292,13 +292,13 @@ COPY --from=idex /home/theia/* .
 
 # RUN wget -O package.json https://github.com/theia-ide/theia-apps/blob/master/theia-full-docker/${version}.package.json
 
-RUN yarn --production && \
-    yarn autoclean --init && \
-    echo *.ts >> .yarnclean && \
-    echo *.ts.map >> .yarnclean && \
-    echo *.spec.* >> .yarnclean && \
-    yarn autoclean --force && \
-    yarn cache clean
+#RUN yarn --production && \
+#    yarn autoclean --init && \
+#    echo *.ts >> .yarnclean && \
+#    echo *.ts.map >> .yarnclean && \
+#    echo *.spec.* >> .yarnclean && \
+#    yarn autoclean --force && \
+#    yarn cache clean
 
 # Change permissions to make the `yang-language-server` executable.
 RUN chmod +x ./plugins/yangster/extension/server/bin/yang-language-server
