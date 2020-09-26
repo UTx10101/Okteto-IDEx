@@ -68,7 +68,7 @@ Get the image name
 {{- define "idex.image" -}}
 {{- $runtimes := list "full" "nodejs" "go" "php" "dart" "cpp" "java" "rust" -}}
 {{if has .Values.runtime $runtimes }}
-   {{- if eq .Values.runtime "nodejs" -}}
+   {{- if eq .Values.runtime "full" -}}
    {{- printf "%s:%s" .Values.image.repository .Values.image.tag -}}
    {{- else -}}
    {{- printf "%s-%s:%s" .Values.image.repository .Values.runtime .Values.image.tag -}}
