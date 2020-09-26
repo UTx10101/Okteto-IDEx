@@ -1,4 +1,4 @@
-FROM theiaide/theia-full as idex
+FROM theiaide/theia-full AS idex
 
 FROM ubuntu:18.04
 
