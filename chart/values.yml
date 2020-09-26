@@ -1,5 +1,33 @@
-tag: dev
+runtime: idex
+repository:
+gitToken:
 
-idex:
-  replicaCount: 1
-  image: okteto.dev/idex
+persistence:
+  size: 1Gi
+
+image:
+  repository: okteto.dev/idex
+  tag: latest
+  pullPolicy: Always
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # If not set it will use the default
+  name:
+
+podSecurityContext:
+  runAsUser: 1001
+  runAsGroup: 1000
+  fsGroup: 1001
+
+service:
+  type: ClusterIP
+  port: 3000
+
+resources:
+  limits:
+    cpu: "1"
+    memory: 2Gi
