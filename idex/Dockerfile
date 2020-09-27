@@ -10,6 +10,11 @@ ENV YARN_VERSION 1.13.0
 # use "latest" or "next" version for Theia packages
 ARG version=latest
 
+# Optionally build a striped Theia application with no map file or .ts sources.
+# Makes image ~150MB smaller when enabled
+ARG strip=false
+ENV strip=$strip
+
 #Common deps
 RUN apt-get update && \
     apt-get -y install build-essential \
@@ -133,6 +138,37 @@ RUN go get -u -v -d github.com/stamblerre/gocode && \
 
 ENV PATH=$PATH:$GOPATH/bin
 
+
+#C/C++
+# public LLVM PPA, development version of LLVM
+ARG LLVM=12
+
+RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add - && \
+    echo "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic main" > /etc/apt/sources.list.d/llvm.list && \
+    apt-get update && \
+    apt-get install -y \
+                       clang-tools-$LLVM \
+                       clangd-$LLVM \
+                       clang-tidy-$LLVM \
+                       gcc-multilib \
+                       g++-multilib \
+                       gdb && \
+    ln -s /usr/bin/clang-$LLVM /usr/bin/clang && \
+    ln -s /usr/bin/clang++-$LLVM /usr/bin/clang++ && \
+    ln -s /usr/bin/clang-cl-$LLVM /usr/bin/clang-cl && \
+    ln -s /usr/bin/clang-cpp-$LLVM /usr/bin/clang-cpp && \
+    ln -s /usr/bin/clang-tidy-$LLVM /usr/bin/clang-tidy && \
+    ln -s /usr/bin/clangd-$LLVM /usr/bin/clangd
+
+# Install latest stable CMake
+ARG CMAKE_VERSION=3.18.1
+
+RUN wget "https://github.com/Kitware/CMake/releases/download/v$CMAKE_VERSION/cmake-$CMAKE_VERSION-Linux-x86_64.sh" && \
+    chmod a+x cmake-$CMAKE_VERSION-Linux-x86_64.sh && \
+    ./cmake-$CMAKE_VERSION-Linux-x86_64.sh --prefix=/usr/ --skip-license && \
+    rm cmake-$CMAKE_VERSION-Linux-x86_64.sh
+
+
 #Python 2-3
 RUN apt-get update \
     && apt-get install -y software-properties-common \
@@ -143,6 +179,7 @@ RUN apt-get update \
     && python -m pip install --upgrade pip --user \
     && python3.8 -m pip install --upgrade pip --user \
     && pip3 install python-language-server flake8 autopep8
+
 
 #PHP
 ARG PHP_VERSION=7.4
@@ -163,6 +200,7 @@ RUN curl -s -o composer-setup.php https://getcomposer.org/installer \
 #Ruby
 RUN apt-get update && apt-get -y install ruby ruby-dev zlib1g-dev && \
     gem install solargraph
+
 
 ## User account
 RUN adduser --disabled-password --gecos '' theia && \
@@ -195,9 +233,10 @@ RUN apt-get update && apt-get install -y python build-essential && \
 USER theia
 WORKDIR /home/theia
 
-RUN wget -O package.json https://raw.githubusercontent.com/theia-ide/theia-apps/master/theia-full-docker/latest.package.json
+RUN wget -O package.json https://raw.githubusercontent.com/theia-ide/theia-apps/master/theia-full-docker/${version}.package.json
 
-RUN yarn --pure-lockfile && \
+RUN if [ "$strip" = "true" ]; then \
+yarn --pure-lockfile && \
     NODE_OPTIONS="--max_old_space_size=4096" yarn theia build && \
     yarn theia download:plugins && \
     yarn --production && \
@@ -206,7 +245,11 @@ RUN yarn --pure-lockfile && \
     echo *.ts.map >> .yarnclean && \
     echo *.spec.* >> .yarnclean && \
     yarn autoclean --force && \
-    yarn cache clean
+    yarn cache clean \
+;else \
+yarn --cache-folder ./ycache && rm -rf ./ycache && \
+     NODE_OPTIONS="--max_old_space_size=4096" yarn theia build && yarn theia download:plugins \
+;fi
 
 # Change permissions to make the `yang-language-server` executable.
 RUN chmod +x ./plugins/yangster/extension/server/bin/yang-language-server
