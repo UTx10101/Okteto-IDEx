@@ -195,7 +195,7 @@ RUN apt-get update && apt-get install -y python build-essential && \
 USER theia
 WORKDIR /home/theia
 
-RUN wget -O package.json https://github.com/theia-ide/theia-apps/blob/master/theia-full-docker/latest.package.json
+RUN wget -O package.json https://raw.githubusercontent.com/theia-ide/theia-apps/master/theia-full-docker/latest.package.json
 
 RUN yarn --pure-lockfile && \
     NODE_OPTIONS="--max_old_space_size=4096" yarn theia build && \
