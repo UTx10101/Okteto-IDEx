@@ -1,3 +1,3 @@
 deploy:
   - okteto build -t okteto.dev/idex:${OKTETO_GIT_COMMIT} idex
-  - helm upgrade --install idex chart --set image.tag=${OKTETO_GIT_COMMIT}, gitToken=${GIT_TOKEN}
+  - helm upgrade --install idex chart --set image.tag=${OKTETO_GIT_COMMIT},gitToken=${GIT_TOKEN}
